@@ -1,0 +1,60 @@
+name: Monitor de precos (Terabyte -> Telegram)
+
+on:
+  schedule:
+    # A cada 30 min. GitHub pode atrasar alguns minutos (normal).
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}   # permite rodar na mao pelo botao "Run workflow"
+
+# Evita duas execucoes simultaneas (o ultimo roda quando o anterior termina)
+concurrency:
+  group: monitor-precos
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # para salvar o historico de precos de volta no repositorio
+
+jobs:
+  checar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Baixar o repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Instalar Chrome headless
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable || true
+          if ! command -v google-chrome-stable >/dev/null; then
+            wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo apt-get install -y /tmp/chrome.deb
+          fi
+          google-chrome-stable --version || true
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Checar precos
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALVO_R$: ${{ vars.ALVO_RS }}
+        run: node monitor.js
+
+      - name: Salvar historico de precos
+        if: always()
+        run: |
+          git config user.name "monitor-precos-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ || true
+          git diff --quiet --cached || git commit -m "chore: atualizar historico de precos [skip ci]"
+          git pull --rebase --autostash || true
+          git push || true
