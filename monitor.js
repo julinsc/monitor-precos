@@ -65,7 +65,10 @@ async function telegram(texto) {
 
 // ---------- navegador ----------
 function acharChrome() {
-  if (process.env.CHROME_PATH && fs.existsSync(process.env.CHROME_PATH)) return process.env.CHROME_PATH;
+  if (process.env.CHROME_PATH) {
+    if (fs.existsSync(process.env.CHROME_PATH)) return process.env.CHROME_PATH;
+    console.warn(`[aviso] CHROME_PATH="${process.env.CHROME_PATH}" nao existe; procurando automaticamente`);
+  }
   const candidatos = [
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
@@ -75,10 +78,42 @@ function acharChrome() {
     '/usr/bin/google-chrome',
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
   ];
   const achado = candidatos.find(p => fs.existsSync(p));
-  if (!achado) throw new Error('Chrome/Edge nao encontrado. Defina CHROME_PATH.');
-  return achado;
+  if (achado) return achado;
+
+  // Ultimo recurso: varrer as pastas tipicas de instalacao do Chrome/Chromium
+  const dirs = [
+    '/opt/google/chrome',
+    '/opt/google/chrome-beta',
+    '/opt/chromium',
+    '/usr/lib/chromium',
+    '/usr/lib/chromium-browser',
+  ];
+  for (const d of dirs) {
+    try {
+      for (const f of fs.readdirSync(d)) {
+        if (/^chrome$|^chromium/.test(f)) {
+          const full = path.join(d, f);
+          try { fs.accessSync(full, fs.constants.X_OK); return full; } catch {}
+        }
+      }
+    } catch {}
+  }
+
+  // Diagnostico util quando nao acha nada
+  const diag = [];
+  for (const d of ['/usr/bin', '/opt', '/snap/bin']) {
+    try {
+      const lista = fs.readdirSync(d).filter(f => /chrom/i.test(f));
+      diag.push(`${d}: ${lista.length ? lista.join(', ') : '(nada)'}`);
+    } catch { diag.push(`${d}: (inacessivel)`); }
+  }
+  throw new Error(
+    'Chrome/Chromium nao encontrado nesta maquina. Defina a variavel CHROME_PATH.\n' +
+    `Plataforma: ${process.platform}\nBusca: ${diag.join(' | ')}`
+  );
 }
 
 async function lancarNavegador() {
