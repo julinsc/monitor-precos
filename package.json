@@ -1,0 +1,19 @@
+{
+  "name": "monitor-precos-terabyte",
+  "version": "1.0.0",
+  "description": "Monitor de preços da TerabyteShop com alertas no Telegram (roda no GitHub Actions, 24/7)",
+  "main": "monitor.js",
+  "scripts": {
+    "checar": "node monitor.js",
+    "teste": "node monitor.js --teste",
+    "simular": "node simular.js queda"
+  },
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.16.0"
+  }
+}
