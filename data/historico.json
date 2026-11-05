@@ -44,6 +44,11 @@
       "quando": "2026-11-04T15:39:09.398Z",
       "preco": 899.99,
       "disponivel": true
+    },
+    {
+      "quando": "2026-11-05T01:58:35.474Z",
+      "preco": 899.99,
+      "disponivel": true
     }
   ],
   "40435": [
@@ -89,6 +94,11 @@
     },
     {
       "quando": "2026-11-04T15:39:07.030Z",
+      "preco": 899.99,
+      "disponivel": true
+    },
+    {
+      "quando": "2026-11-05T01:58:32.986Z",
       "preco": 899.99,
       "disponivel": true
     }
